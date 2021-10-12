@@ -73,7 +73,7 @@ plot_df_srf <- plot_df %>%
 
 # Plot BIOGEOTRACES  Growth ----------------------------------------------------
 
-pp <- ggplot(plot_df_srf) +
+ppcr <- ggplot(plot_df_srf) +
   geom_polygon(data=world_map,
                aes(x=long,
                    y = lat,
@@ -93,15 +93,45 @@ pp <- ggplot(plot_df_srf) +
                               "#999933",
                               "#DDCC77",
                               "#CC6677",
-                              "#882255")) + 
+                              "#882255")) +
   labs(color="Cruise", size="Max. Growth Rate") +
   theme(legend.position = c(0.1,0.66),
         legend.box.background = element_rect(fill = "white",color="white"),
         plot.title = element_text(vjust=1,hjust=0.05)) +
   guides(fill = guide_legend(order = 2),
-         col = guide_legend(order = 1,override.aes = list(size=4))) + 
+         col = guide_legend(order = 1,override.aes = list(size=4))) +
   ggtitle("Prokaryotes")
-pe <- ggplot(plot_df_srf) +
+
+plot_df_srf_pp <- plot_df_srf %>% 
+  group_by(Latitude.and.Longitude) %>%
+  filter(d.madin==min(d.madin))
+plot_df_srf_pp$rate.madin <- log(2)/plot_df_srf_pp$d.madin
+pp <- ggplot(plot_df_srf_pp) +
+  geom_polygon(data=world_map,
+               aes(x=long,
+                   y = lat,
+                   group = group),
+               fill="black",
+               color="black") +
+  geom_point(data=plot_df_srf_pp,
+             aes(x=Lon,
+                 y=Lat,
+                 size=rate.madin,
+                 color=rate.madin) )+
+  theme_void() +
+  scale_size_continuous(limits=c(0.05,0.5), breaks=c(0.1,0.2,0.3,0.4)) +
+  scale_color_gradient(low="#41ab5d",
+                       high="#00441b",
+                       guide = "legend",
+                       limits=c(0.05,0.5), 
+                       breaks=c(0.1,0.2,0.3,0.4)) +
+  labs(color="Max. Growth Rate", size="Max. Growth Rate") +
+  theme(legend.position = c(0.1,0.66),
+        legend.box.background = element_rect(fill = "white",color="white"),
+        plot.title = element_text(vjust=1,hjust=0.05)) +
+  ggtitle("Prokaryotes")
+
+pecr <- ggplot(plot_df_srf) +
   geom_polygon(data=world_map,
                aes(x=long,
                    y = lat,
@@ -120,14 +150,42 @@ pe <- ggplot(plot_df_srf) +
                               "#999933",
                               "#DDCC77",
                               "#CC6677",
-                              "#882255")) + 
+                              "#882255")) +
   scale_size(breaks=c(0.025,0.075,0.125)) +
   labs(color="Cruise", size="Max. Growth Rate") +
   theme(legend.position = c(0.1,0.67),
         legend.box.background = element_rect(fill = "white",color="white"),
         plot.title = element_text(vjust=1,hjust=0.05)) +
   guides(fill = guide_legend(order = 2),
-         col = guide_legend(order = 1,override.aes = list(size=4))) + 
+         col = guide_legend(order = 1,override.aes = list(size=4))) +
+  ggtitle("Eukaryotes")
+
+plot_df_srf_pe <- plot_df_srf %>% 
+  group_by(Latitude.and.Longitude) %>%
+  filter(d.eukaryotes==min(d.eukaryotes))
+plot_df_srf_pe$rate.eukaryotes <- log(2)/plot_df_srf_pe$d.eukaryotes
+pe <- ggplot(plot_df_srf_pe) +
+  geom_polygon(data=world_map,
+               aes(x=long,
+                   y = lat,
+                   group = group),
+               fill="black",
+               color="black") +
+  geom_point(data=plot_df_srf_pe,
+             aes(x=Lon,y=Lat,
+                 size=rate.eukaryotes,
+                 color=rate.eukaryotes)) +
+  theme_void() +
+  scale_size_continuous(limits=c(0.01,0.2), breaks=c(0.025,0.05,0.075,0.1,0.125,0.15)) +
+  scale_color_gradient(low="#41ab5d",
+                       high="#00441b",
+                       guide = "legend",
+                       limits=c(0.01,0.2), 
+                       breaks=c(0.025,0.05,0.075,0.1,0.125,0.15)) +
+  labs(color="Max. Growth Rate", size="Max. Growth Rate") +
+  theme(legend.position = c(0.1,0.66),
+        legend.box.background = element_rect(fill = "white",color="white"),
+        plot.title = element_text(vjust=1,hjust=0.05)) +
   ggtitle("Eukaryotes")
 
 
@@ -164,6 +222,11 @@ ggarrange(ggarrange(pd1,pd2,nrow=2,labels=c("(a)","(b)")),
           ggarrange(pp,pe,nrow=2,labels=c("(c)","(d)")),
           ncol=2,
           widths=c(2,4))
+dev.off()
+
+setwd("~/eeggo/Figures")
+pdf("BIOGEOTRACES_cruises.pdf",width=10,height=12)
+ggarrange(ppcr,pecr,nrow=2,labels=c("(a)","(b)"))
 dev.off()
 
 summary(lm(d.madin~d.eukaryotes*Depth..m.,data=plot_df))

@@ -35,27 +35,32 @@ load("CodonStatistics_alexander.RData")
 alexander_df <- assembly_df %>% subset(nHE>10)
 alexander_tax <- read.csv("TableS02_EukaryoticMAG.csv")
 names(alexander_tax)[1] <- "ID"
+names(alexander_tax)[4] <- "grpname"
+alexander_tax_eukulele <- read.delim("alexander_divisions.tbl",head=F)
+names(alexander_tax_eukulele) <- c("ID","TaxLevel","groups","confidence")
 alexander_met <- read.csv("TableS09_TOPAZ_HetScore.csv")
 names(alexander_met)[1] <- "ID"
 alexander_df$ID <- gsub(".cds","",alexander_df$Assembly)
 alexander_df <- merge.easy(alexander_df,alexander_tax,key="ID") %>% 
-  subset(groups!="Metazoa")
+  subset(grpname!="Metazoa")
+alexander_df <- merge.easy(alexander_df,alexander_tax_eukulele,key="ID")
 alexander_df <- merge.easy(alexander_df,alexander_met,key="ID")
 
 load("CodonStatistics_delmont.RData")
 delmont_df <- assembly_df %>% subset(nHE>10)
 delmont_tax <- read.csv("Delmont_taxonomy.csv")
-delmont_tax_eukulele <- read.table("delmont_groups.tbl")
-names(delmont_tax_eukulele) <- c("ID","groups","percent")
+delmont_tax_eukulele <- read.table("delmont_divisions.tbl")
+names(delmont_tax_eukulele) <- c("ID","TaxLevel","groups","confidence")
 names(delmont_tax)[1] <- "ID"
 delmont_df$ID <- gsub(".cds","",delmont_df$Assembly)
 delmont_df <- merge.easy(delmont_df,delmont_tax,key="ID") %>% 
   merge.easy(.,delmont_tax_eukulele,key="ID") %>%
   subset(Best_taxonomy_KINGDON!="Animalia")
 
-tax_a <- alexander_df %>% subset(select=c(ID,d,groups))
-tax_d <- delmont_df %>% subset(select=c(ID,d,groups))
-tax_all <- rbind(tax_a,tax_d)
+
+tax_a <- alexander_df %>% subset(select=c(ID,d,groups,confidence))
+tax_d <- delmont_df %>% subset(select=c(ID,d,groups,confidence))
+tax_all <- rbind(tax_a,tax_d)# %>% subset(confidence>0.8)
 
 load("growth_MMETSP.RData")
 names(growth_df_mmetsp)[2] <- "d"
